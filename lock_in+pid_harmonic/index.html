@@ -128,7 +128,7 @@
   // List of params to save/load
   config_params_txts = 'xmin,xmax,trig_mode,trig_source,trig_edge,trig_delay,trig_level,time_range,time_units,en_avg_at_dec,min_y,'+
                        'max_y,prb_att_ch1,gain_ch1,prb_att_ch2,gain_ch2,gui_xmin,gui_xmax,'+
-                       'lock_oscA_sw,lock_oscB_sw,lock_osc1_filt_off,lock_osc2_filt_off,lock_osc_raw_mode,lock_osc_lockin_mode,lock_trig_sw,'+
+                       'lock_oscA_sw,lock_oscB_sw,lock_osc1_filt_off,lock_osc2_filt_off,lock_osc_ch2_over_ch1,lock_osc_raw_mode,lock_osc_lockin_mode,lock_trig_sw,'+
                        'lock_out1_sw,lock_out2_sw,lock_lock_control,lock_lock_trig_val,lock_lock_trig_time_val,lock_lock_trig_sw,lock_rl_error_threshold,'+
                        'lock_rl_signal_sw,lock_rl_signal_threshold,lock_rl_error_enable,lock_rl_signal_enable,lock_rl_reset,lock_sf_jumpA,'+
                        'lock_sf_jumpB,lock_sf_start,lock_sf_AfrzO,lock_sf_AfrzI,lock_sf_BfrzO,lock_sf_BfrzI,lock_signal_sw,lock_sg_amp0,'+
@@ -1432,7 +1432,7 @@
     });
 
     // Checkboxes inputs
-    var input_checkboxes = '#lock_osc1_filt_off,#lock_osc2_filt_off,#lock_rl_error_enable,#lock_rl_signal_enable,#lock_rl_reset,#lock_sf_AfrzO,'+
+    var input_checkboxes = '#lock_osc1_filt_off,#lock_osc2_filt_off,#lock_osc_ch2_over_ch1,#lock_rl_error_enable,#lock_rl_signal_enable,#lock_rl_reset,#lock_sf_AfrzO,'+
                            '#lock_sf_AfrzI,#lock_sf_BfrzO,#lock_sf_BfrzI,#lock_ramp_reset,#lock_ramp_enable,#lock_ramp_direction,#lock_ramp_sawtooth,'+
                            '#lock_pidA_irst,#lock_pidA_freeze,#lock_pidA_ifreeze,#lock_pidB_irst,#lock_pidB_freeze,#lock_pidB_ifreeze,#lock_ctrl_aux_set_pidB_enable,'+
                            '#lock_ctrl_aux_set_pidA_enable,#lock_ctrl_aux_set_ramp_enable,#lock_ctrl_aux_lock_trig_rise';
@@ -2930,6 +2930,7 @@
     // Checkboxes
     $('#lock_osc1_filt_off'           ).prop('checked', (params.original.lock_osc1_filt_off               ? true : false));
     $('#lock_osc2_filt_off'           ).prop('checked', (params.original.lock_osc2_filt_off               ? true : false));
+    $('#lock_osc_ch2_over_ch1'        ).prop('checked', (params.original.lock_osc_ch2_over_ch1            ? true : false));
     $('#lock_rl_error_enable'         ).prop('checked', (params.original.lock_rl_error_enable             ? true : false));
     $('#lock_rl_signal_enable'        ).prop('checked', (params.original.lock_rl_signal_enable            ? true : false));
     $('#lock_rl_reset'                ).prop('checked', (params.original.lock_rl_reset                    ? true : false));
@@ -3265,8 +3266,10 @@
     }
 
     filtered = addTriggerDataSet(filtered);
+    filtered = addMathDataSet(filtered);
 
     filtered[1].yaxis = 2 ;
+    //filtered[2].yaxis = 2 ;
 
     return filtered;
   }
@@ -3332,6 +3335,30 @@
       dxmax = dsets[0].data[dsets[0].data.length - 1][0];
     }
     dsets[index] = { color: 2, data: [[dxmin, tlev], [dxmax, tlev]], shadowSize: 1 };
+
+    return dsets;
+  }
+
+  // Add a math data series of Channel 2 over Channel 1 
+  function  addMathDataSet(dsets) {
+    //var checked = !btn.data('checked');
+
+    dsets.push({ color: "black", label: "math", data: [] })
+    // Simple division (Ch2/Ch1) option for now.
+    window = 2
+    for(var i=0; i<window; i++) {
+      dsets[2].data.push([[dsets[1].data[i][0]],[0]])
+    }
+
+    for(var i=2; i<dsets[1].data.length; i++) {
+        if ((dsets[0].data[i][1]) !=0 && (dsets[0].data[i-1][1]) != 0 && (dsets[0].data[i-2][1]) !=0) {
+          average = ((dsets[1].data[i][1] / dsets[0].data[i][1]) + (dsets[1].data[i-1][1] / dsets[0].data[i-1][1]) + (dsets[1].data[i-2][1] / dsets[0].data[i-2][1]))/3
+          dsets[2].data.push([[dsets[1].data[i][0]],[(average/100)]])
+        }
+        else {
+          dsets[2].data.push([[dsets[1].data[i][0]],[0]])
+        }
+      }    
 
     return dsets;
   }
@@ -4451,26 +4478,56 @@
                         </form>
                       </div>
                       <hr style="margin: 7px 7px">
-                      <div class="panel-group col-xs-12 col-sm-12 col-md-12 text-center">
-                        Disable anti-aliasing filter:
+                      <div class="row">
+                        <div class="panel-group col-xs-12 col-sm-12 col-md-12 text-center">
+                          Add math channel:
+                        </div>
+                        <div class="panel-group col-xs-12 col-sm-6 col-md-6">
+                          <form class="form-horizontal" role="form" onsubmit="return false;">
+                            <div class="checkbox" style="padding-bottom: 12px;">
+                              <label class="group-label">
+                                <input type="checkbox" id="lock_osc_ch2_over_ch1" checked>Ch2/Ch1
+                              </label>
+                            </div>
+                          </form>
+                        </div>
+                        <div class="panel-group col-xs-12 col-sm-6 col-md-6">
+                          <form class="form-horizontal" role="form" onsubmit="return false;">
+                            <div class="form-group">
+                              <label for="lock_osc_ch2_over_ch1_gain" class="col-xs-4 control-label">Gain:</label>
+                              <div class="col-xs-4 col-sm-8">
+                                <input type="number" autocomplete="off" class="form-control" value="0" id="lock_osc_ch2_over_ch1_gain" step="1" min="0" max="2519">
+                                <span style="display: none;" class="input-group-btn" id="lock_osc_ch2_over_ch1_gain_apply">
+                                  <button type="button" class="btn btn-primary btn-lg"><span class="glyphicon glyphicon-ok-circle"></span></button>
+                                </span>
+                              </div>
+                            </div>
+                          </form>
+                        </div>
                       </div>
-                      <div class="panel-group col-xs-12 col-sm-6 col-md-6">
-                        <form class="form-horizontal" role="form" onsubmit="return false;">
-                          <div class="checkbox" style="padding-bottom: 12px;">
-                            <label class="group-label">
-                              <input type="checkbox" id="lock_osc1_filt_off" checked>Ch1
-                            </label>
-                          </div>
-                        </form>
-                      </div>
-                      <div class="panel-group col-xs-12 col-sm-6 col-md-6">
-                        <form class="form-horizontal" role="form" onsubmit="return false;">
-                          <div class="checkbox" style="padding-bottom: 12px;">
-                            <label class="group-label">
-                              <input type="checkbox" id="lock_osc2_filt_off" checked>Ch2
-                            </label>
-                          </div>
-                        </form>
+                      <hr style="margin: 7px 7px">
+                      <div class="row">
+                        <div class="panel-group col-xs-12 col-sm-12 col-md-12 text-center">
+                          Disable anti-aliasing filter:
+                        </div>
+                        <div class="panel-group col-xs-12 col-sm-6 col-md-6">
+                          <form class="form-horizontal" role="form" onsubmit="return false;">
+                            <div class="checkbox" style="padding-bottom: 12px;">
+                              <label class="group-label">
+                                <input type="checkbox" id="lock_osc1_filt_off" checked>Ch1
+                              </label>
+                            </div>
+                          </form>
+                        </div>
+                        <div class="panel-group col-xs-12 col-sm-6 col-md-6">
+                          <form class="form-horizontal" role="form" onsubmit="return false;">
+                            <div class="checkbox" style="padding-bottom: 12px;">
+                              <label class="group-label">
+                                <input type="checkbox" id="lock_osc2_filt_off" checked>Ch2
+                              </label>
+                            </div>
+                          </form>
+                        </div>
                       </div>
                     </div>
                   </div>
