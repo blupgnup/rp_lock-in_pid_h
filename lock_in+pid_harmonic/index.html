@@ -128,7 +128,7 @@
   // List of params to save/load
   config_params_txts = 'xmin,xmax,trig_mode,trig_source,trig_edge,trig_delay,trig_level,time_range,time_units,en_avg_at_dec,min_y,'+
                        'max_y,prb_att_ch1,gain_ch1,prb_att_ch2,gain_ch2,gui_xmin,gui_xmax,'+
-                       'lock_oscA_sw,lock_oscB_sw,lock_osc1_filt_off,lock_osc2_filt_off,lock_osc_ch2_over_ch1,lock_osc_ch2_over_ch1_gain,lock_osc_raw_mode,lock_osc_lockin_mode,lock_trig_sw,'+
+                       'lock_oscA_sw,lock_oscB_sw,lock_osc1_filt_off,lock_osc2_filt_off,lock_osc_ch2_over_ch1,lock_osc_ch2_over_ch1_sampling,lock_osc_ch2_over_ch1_gain,lock_osc_raw_mode,lock_osc_lockin_mode,lock_trig_sw,'+
                        'lock_out1_sw,lock_out2_sw,lock_lock_control,lock_lock_trig_val,lock_lock_trig_time_val,lock_lock_trig_sw,lock_rl_error_threshold,'+
                        'lock_rl_signal_sw,lock_rl_signal_threshold,lock_rl_error_enable,lock_rl_signal_enable,lock_rl_reset,lock_sf_jumpA,'+
                        'lock_sf_jumpB,lock_sf_start,lock_sf_AfrzO,lock_sf_AfrzI,lock_sf_BfrzO,lock_sf_BfrzI,lock_signal_sw,lock_sg_amp0,'+
@@ -3344,11 +3344,11 @@
   function  addMathDataSet(dsets) {
       dsets.push({ color: "black", label: "math", data: [] })
       // Simple division (Ch2/Ch1) option for now.
-      sample_size = 3
       total = 0
       average = 0
       checked = $('#lock_osc_ch2_over_ch1').prop('checked');
       gain = $('#lock_osc_ch2_over_ch1_gain').val()
+      sample_size = $('#lock_osc_ch2_over_ch1_sampling').val()
       
       if (gain != 0 && checked) {
         for(var i=0; i<dsets[1].data.length; i++) {
@@ -4512,6 +4512,22 @@
                               <div class="col-xs-4 col-sm-8">
                                 <input type="number" autocomplete="off" class="form-control" value="1" id="lock_osc_ch2_over_ch1_gain" step="0.01" min="0" max="2519">
                                 <span style="display: none;" class="input-group-btn" id="lock_osc_ch2_over_ch1_gain_apply">
+                                  <button type="button" class="btn btn-primary btn-lg"><span class="glyphicon glyphicon-ok-circle"></span></button>
+                                </span>
+                              </div>
+                            </div>
+                          </form>
+                        </div>
+                        <div class="panel-group col-xs-12 col-sm-5 col-md-5">
+                          Moving average:
+                        </div>
+                        <div class="panel-group col-xs-12 col-sm-7 col-md-7">
+                          <form class="form-horizontal" role="form" onsubmit="return false;">
+                            <div class="form-group">
+                              <label for="lock_osc_ch2_over_ch1_sampling" class="col-xs-6 control-label">Sample size:</label>
+                              <div class="col-xs-6 col-sm-6">
+                                <input type="number" autocomplete="off" class="form-control" value="3" id="lock_osc_ch2_over_ch1_sampling" step="1" min="1" max="50">
+                                <span style="display: none;" class="input-group-btn" id="lock_osc_ch2_over_ch1_sampling_apply">
                                   <button type="button" class="btn btn-primary btn-lg"><span class="glyphicon glyphicon-ok-circle"></span></button>
                                 </span>
                               </div>
